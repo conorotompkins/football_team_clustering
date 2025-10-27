@@ -15,12 +15,13 @@ theme_set(theme_bw())
 source("scripts/functions/clean_colname.R")
 source("scripts/functions/read_standard_stats.R")
 source("scripts/functions/read_squad_goalkeeping.R")
+source("scripts/functions/read_squad_shooting.R")
 
 #read in data and parse
 standard_files <- list.files(
   "inputs",
-  full.names = TRUE,
-  pattern = "Standard"
+  pattern = "Standard",
+  full.names = TRUE
 ) |>
   set_names()
 
@@ -31,12 +32,21 @@ gk_files <- list.files(
 ) |>
   set_names()
 
+shooting_files <- list.files(
+  "inputs",
+  full.names = TRUE,
+  pattern = "Shooting"
+) |>
+  set_names()
+
 standard_df <- read_standard_stats(standard_files)
 
 gk_df <- read_squad_goalkeeping(gk_files)
 
-fbref_data <- list(standard_df, gk_df) |>
-  reduce(left_join)
+shooting_df <- read_squad_shooting(shooting_files)
+
+fbref_data <- list(standard_df, gk_df, shooting_df) |>
+  reduce(left_join, by = "squad")
 
 glimpse(fbref_data)
 
@@ -63,7 +73,16 @@ fbref_data <- fbref_data |>
     cs,
     pk_att,
     pk_a,
-    pk_save_percent
+    pk_save_percent,
+    so_t,
+    sh,
+    dist,
+    fk,
+    pk,
+    p_katt,
+    np_xg,
+    np_xg_per_shot,
+    np_g_minus_xg
   )
 
 #cluster
@@ -169,7 +188,6 @@ pca_fit |>
   ggplot(aes(.fittedPC1, .fittedPC2, label = squad)) +
   geom_point() +
   geom_label_repel()
-
 
 #pairwise scatter
 my_fn <- function(data, mapping, ...) {
