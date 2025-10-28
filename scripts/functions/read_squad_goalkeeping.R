@@ -8,7 +8,8 @@ read_squad_goalkeeping <- function(files) {
 
   df_2 <- files |>
     read_tsv(skip = 1) |>
-    select(3:6)
+    select(3:6) |>
+    clean_names()
 
   df_3 <- files |>
     read_tsv(skip = 1) |>
@@ -24,6 +25,25 @@ read_squad_goalkeeping <- function(files) {
     rename_with(~ str_replace(.x, "PK", "PK_")) |>
     clean_names()
 
-  list(df_1, df_2, df_3, df_4) |>
+  combined <- list(df_1, df_2, df_3, df_4) |>
     list_cbind()
+
+  combined |>
+    select(
+      squad,
+      goalkeeper_count,
+      ga,
+      so_ta,
+      save_percent,
+      cs_percent,
+      pk_a,
+      pk_save_percent
+    ) |>
+    rename(
+      goals_a = ga,
+      sot_a = so_ta,
+      save_pct = save_percent,
+      clean_sheet_pct = cs_percent,
+      pk_save_pct = pk_save_percent
+    )
 }

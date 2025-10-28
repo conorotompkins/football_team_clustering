@@ -24,6 +24,46 @@ read_standard_stats <- function(files) {
     select(21:22) |>
     rename_with(clean_colname)
 
-  list(df_1, df_2, df_3, df_4, df_5) |>
+  combined <- list(df_1, df_2, df_3, df_4, df_5) |>
     list_cbind()
+
+  combined |>
+    select(
+      squad,
+      player_count,
+      age,
+      poss,
+      Gls,
+      Ast,
+      `G+A`,
+      `G-PK`,
+      PK,
+      PKatt,
+      CrdY,
+      CrdR,
+      xG,
+      npxG,
+      xAG,
+      `npxG+xAG`,
+      PrgC,
+      PrgP
+    ) |>
+    rename(
+      age_avg = age,
+      possession_pct = poss,
+      goals = Gls,
+      assists = Ast,
+      goals_plus_assists = `G+A`,
+      goals_np = `G-PK`,
+      pk_made = PK,
+      sh_pk = PKatt,
+      cards_yellow = CrdY,
+      cards_red = CrdR,
+      xg = xG,
+      xg_np = npxG,
+      xa = xAG,
+      xg_plus_xa_np = `npxG+xAG`,
+      progressive_carries = PrgC,
+      progressive_passes = PrgP
+    )
 }

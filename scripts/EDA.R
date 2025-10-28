@@ -52,37 +52,42 @@ glimpse(fbref_data)
 
 fbref_data <- fbref_data |>
   select(
+    #standard
     squad,
     player_count,
-    age,
-    poss,
-    Gls,
-    Ast,
-    PK,
-    PKatt,
-    CrdY,
-    CrdR,
-    xG,
-    npxG,
-    xAG,
-    PrgC,
-    PrgP,
+    age_avg,
+    possession_pct,
+    goals,
+    assists,
+    goals_plus_assists,
+    pk_made,
+    cards_yellow,
+    cards_red,
+    xg,
+    xg_np,
+    xa,
+    xg_plus_xa_np,
+    progressive_carries,
+    progressive_passes,
+    #goalkeeping
     goalkeeper_count,
-    ga,
-    so_ta,
-    cs,
-    pk_att,
+    goals_a,
+    sot_a,
+    save_pct,
+    clean_sheet_pct,
     pk_a,
-    pk_save_percent,
-    so_t,
-    sh,
-    dist,
-    fk,
-    pk,
-    p_katt,
-    np_xg,
-    np_xg_per_shot,
-    np_g_minus_xg
+    pk_save_pct,
+    #shooting
+    shots,
+    sot,
+    sot_pct,
+    g_per_shot,
+    g_per_sot,
+    shot_distance,
+    sh_fk,
+    sh_pk,
+    xg_per_shot_np,
+    g_minus_xg_np
   )
 
 #cluster
@@ -194,15 +199,9 @@ my_fn <- function(data, mapping, ...) {
   # Using default ggplot density function
 
   p <- ggplot(data = data, mapping = mapping) +
-    #stat_density2d(
-    #  aes(fill = after_stat(density)),
-    #  geom = "tile",
-    #  contour = FALSE
-    #) +
-    geom_point() +
-    scale_fill_gradientn(colours = viridis::viridis(100, option = "viridis")) +
-    scale_x_continuous(labels = NULL) +
-    scale_y_continuous(labels = NULL) +
+    geom_density2d_filled() +
+    #geom_point() +
+    scale_fill_viridis_d() +
     theme(
       axis.text = element_blank(),
       axis.ticks = element_blank(),
@@ -219,7 +218,7 @@ pairwise_scatter <- ggpairs(
 ggsave(
   "outputs/pairwise_scatter.png",
   plot = pairwise_scatter,
-  width = 15,
-  height = 15,
+  width = 30,
+  height = 30,
   dpi = 300
 )

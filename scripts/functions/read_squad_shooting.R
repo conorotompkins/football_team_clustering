@@ -19,6 +19,36 @@ read_squad_shooting <- function(files) {
     rename_with(~ str_replace(.x, "\\/Sh", "_per_shot")) |>
     rename(np_g_minus_xg = `np:G-xG`)
 
-  list(df_1, df_2, df_3) |>
+  combined <- list(df_1, df_2, df_3) |>
     list_cbind()
+
+  glimpse(combined)
+
+  combined |>
+    select(
+      squad,
+      sh,
+      so_t,
+      so_t_percent,
+      g_sh,
+      g_so_t,
+      dist,
+      fk,
+      #pk,
+      #np_xg,
+      np_xg_per_shot,
+      np_g_minus_xg
+    ) |>
+    rename(
+      shots = sh,
+      sot = so_t,
+      sot_pct = so_t_percent,
+      g_per_shot = g_sh,
+      g_per_sot = g_so_t,
+      shot_distance = dist,
+      sh_fk = fk,
+      #xg_np = np_xg,
+      xg_per_shot_np = np_xg_per_shot,
+      g_minus_xg_np = np_g_minus_xg
+    )
 }
