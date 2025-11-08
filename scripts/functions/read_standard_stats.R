@@ -63,7 +63,6 @@ read_standard_stats <- function(files) {
       xg_np = npxG,
       xa = xAG,
       xg_plus_xa_np = `npxG+xAG`,
-      progressive_carries = PrgC,
-      progressive_passes = PrgP
+      progressive_carries = PrgC
     )
 }
