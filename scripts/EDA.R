@@ -6,6 +6,7 @@ library(factoextra)
 library(tune)
 library(ggrepel)
 library(GGally)
+library(tidytext)
 
 options(scipen = 999, digits = 4)
 
@@ -72,9 +73,6 @@ fbref_data <- fbref_data |>
     player_count,
     age_avg,
     possession_pct,
-    goals,
-    assists,
-    goals_plus_assists,
     pk_made,
     cards_yellow,
     cards_red,
@@ -83,14 +81,12 @@ fbref_data <- fbref_data |>
     xa,
     xg_plus_xa_np,
     progressive_carries,
-    progressive_passes,
     #goalkeeping
     goalkeeper_count,
-    goals_a,
-    sot_a,
+    sot_against,
     save_pct,
     clean_sheet_pct,
-    pk_a,
+    pk_against,
     pk_save_pct,
     #shooting
     shots,
@@ -155,6 +151,27 @@ pca_rot <- pca_fit |>
   tidy(matrix = "rotation") |>
   pivot_wider(names_from = "PC", names_prefix = "PC", values_from = "value") |>
   rename(common_name = column)
+
+pca_rot |>
+  select(1:6) |>
+  pivot_longer(cols = starts_with("PC")) |>
+  rename(
+    pc = name,
+    rot = value,
+    variable = common_name
+  ) |>
+  mutate(
+    rot_abs = abs(rot),
+    sign = sign(rot) |> as.factor()
+  ) |>
+  arrange(pc, desc(rot_abs)) |>
+  group_by(pc) |>
+  slice_max(rot_abs, n = 3) |>
+  mutate(variable = reorder_within(variable, by = rot_abs, within = pc)) |>
+  ggplot(aes(x = rot_abs, y = variable, fill = sign)) +
+  geom_col() +
+  scale_y_reordered() +
+  facet_wrap(vars(pc), scales = "free_y")
 
 # define arrow style for plotting
 arrow_style <- arrow(
@@ -246,6 +263,12 @@ pca_fit |>
 pca_fit |>
   augment(fbref_data) |>
   ggplot(aes(.fittedPC1, .fittedPC3, label = squad)) +
+  geom_point() +
+  geom_label_repel()
+
+pca_fit |>
+  augment(fbref_data) |>
+  ggplot(aes(.fittedPC2, .fittedPC3, label = squad)) +
   geom_point() +
   geom_label_repel()
 
