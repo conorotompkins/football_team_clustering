@@ -12,101 +12,88 @@ options(scipen = 999, digits = 4)
 
 theme_set(theme_bw())
 
-#read in functions
-source("scripts/functions/clean_colname.R")
-source("scripts/functions/read_standard_stats.R")
-source("scripts/functions/read_squad_goalkeeping.R")
-source("scripts/functions/read_squad_shooting.R")
-source("scripts/functions/read_squad_passing.R")
+# #read in functions
+# source("scripts/functions/clean_colname.R")
+# source("scripts/functions/read_standard_stats.R")
+# source("scripts/functions/read_squad_goalkeeping.R")
+# source("scripts/functions/read_squad_shooting.R")
+# source("scripts/functions/read_squad_passing.R")
 
-#read in data and parse
-standard_files <- list.files(
-  "inputs",
-  pattern = "Standard",
-  full.names = TRUE
-) |>
-  set_names()
+# #read in data and parse
+# standard_files <- list.files(
+#   "inputs",
+#   pattern = "Standard",
+#   full.names = TRUE
+# ) |>
+#   set_names()
 
-gk_files <- list.files(
-  "inputs",
-  full.names = TRUE,
-  pattern = "Goalkeeping"
-) |>
-  set_names()
+# gk_files <- list.files(
+#   "inputs",
+#   full.names = TRUE,
+#   pattern = "Goalkeeping"
+# ) |>
+#   set_names()
 
-shooting_files <- list.files(
-  "inputs",
-  full.names = TRUE,
-  pattern = "Shooting"
-) |>
-  set_names()
+# shooting_files <- list.files(
+#   "inputs",
+#   full.names = TRUE,
+#   pattern = "Shooting"
+# ) |>
+#   set_names()
 
-passing_files <- list.files(
-  "inputs",
-  full.names = TRUE,
-  pattern = "Passing"
-) |>
-  set_names()
+# passing_files <- list.files(
+#   "inputs",
+#   full.names = TRUE,
+#   pattern = "Passing"
+# ) |>
+#   set_names()
 
-standard_df <- read_standard_stats(standard_files)
+# standard_df <- read_standard_stats(standard_files)
 
-gk_df <- read_squad_goalkeeping(gk_files)
+# gk_df <- read_squad_goalkeeping(gk_files)
 
-shooting_df <- read_squad_shooting(shooting_files)
+# shooting_df <- read_squad_shooting(shooting_files)
 
-passing_df <- read_squad_passing(passing_files)
+# passing_df <- read_squad_passing(passing_files)
 
-fbref_data <- list(
-  standard_df,
-  gk_df,
-  shooting_df,
-  passing_df
-) |>
-  reduce(left_join, by = "squad")
+# fbref_data <- list(
+#   standard_df,
+#   gk_df,
+#   shooting_df,
+#   passing_df
+# ) |>
+#   reduce(left_join, by = "squad")
+
+fbref_data <- read_csv("input/cleaned/fbref_data_cleaned.csv")
 
 glimpse(fbref_data)
 
 fbref_data <- fbref_data |>
   select(
-    #standard
+    comp,
+    season_end_year,
     squad,
-    player_count,
-    age_avg,
-    possession_pct,
-    pk_made,
-    cards_yellow,
-    cards_red,
-    xg,
-    xg_np,
-    xa,
-    xg_plus_xa_np,
-    progressive_carries,
-    #goalkeeping
-    goalkeeper_count,
-    sot_against,
-    save_pct,
-    clean_sheet_pct,
-    pk_against,
-    pk_save_pct,
-    #shooting
-    shots,
-    sot,
-    sot_pct,
-    g_per_shot,
-    g_per_sot,
-    shot_distance,
-    sh_fk,
-    sh_pk,
-    xg_per_shot_np,
-    g_minus_xg_np,
-    #passing
-    starts_with("pass")
+    #standard
+    num_players_team,
+    age_avg_team,
+    starts_with("possession_pct"),
+    starts_with("pk_made"),
+    starts_with("sh_pk"),
+    starts_with("cards"),
+    starts_with("progressive_carries"),
+    starts_with("xg"),
+    starts_with("xgassisted"),
+    starts_with("sh"),
+    starts_with("sot"),
+    starts_with("goals_per"),
+    starts_with("avg_shot_dist"),
+    starts_with("g_minus")
   )
 
 glimpse(fbref_data)
 
 #cluster
-fbref_data_no_squad <- select(fbref_data, -squad)
+fbref_data_no_squad <- select(fbref_data, -c(comp, season_end_year, squad))
 
 hclust_wss_plot <- fviz_nbclust(
   fbref_data_no_squad,
@@ -117,7 +104,7 @@ hclust_wss_plot <- fviz_nbclust(
 
 hclust_wss_plot
 
-nclust_hclust <- 3
+nclust_hclust <- 5
 
 hc_spec <- hier_clust(
   num_clusters = nclust_hclust,
@@ -208,7 +195,8 @@ pca_outliers_min <- pca_rot |>
   distinct(common_name)
 
 pca_outliers <- bind_rows(pca_outliers_max, pca_outliers_min) |>
-  left_join(pca_rot)
+  left_join(pca_rot) |>
+  distinct()
 
 pca_rot |>
   ggplot(aes(PC1, PC2)) +
@@ -254,23 +242,39 @@ pca_rot |>
 
 pca_rot
 
-pca_fit |>
+team_pca <- pca_fit |>
   augment(fbref_data) |>
-  ggplot(aes(.fittedPC1, .fittedPC2, label = squad)) +
-  geom_point() +
-  geom_label_repel()
+  select(-.rownames) |>
+  rename_with(~ str_remove(.x, ".fitted")) |>
+  mutate(id = str_c(squad, season_end_year, sep = "\n")) |>
+  select(comp, season_end_year, squad, id, PC1:PC3)
 
-pca_fit |>
-  augment(fbref_data) |>
-  ggplot(aes(.fittedPC1, .fittedPC3, label = squad)) +
-  geom_point() +
-  geom_label_repel()
+team_pca |>
+  ggplot(aes(PC1, PC2, label = id)) +
+  geom_point(aes(color = comp)) +
+  geom_label_repel(
+    data = team_pca |>
+      filter(percent_rank(abs(PC1)) > .95 | percent_rank(abs(PC2)) > .95),
+    aes(fill = comp)
+  )
 
-pca_fit |>
-  augment(fbref_data) |>
-  ggplot(aes(.fittedPC2, .fittedPC3, label = squad)) +
-  geom_point() +
-  geom_label_repel()
+team_pca |>
+  ggplot(aes(PC2, PC3, label = id)) +
+  geom_point(aes(color = comp)) +
+  geom_label_repel(
+    data = team_pca |>
+      filter(percent_rank(abs(PC2)) > .95 | percent_rank(abs(PC3)) > .95),
+    aes(fill = comp)
+  )
+
+team_pca |>
+  ggplot(aes(PC1, PC3, label = id)) +
+  geom_point(aes(color = comp)) +
+  geom_label_repel(
+    data = team_pca |>
+      filter(percent_rank(abs(PC1)) > .95 | percent_rank(abs(PC3)) > .95),
+    aes(fill = comp)
+  )
 
 #pairwise scatter
 my_fn <- function(data, mapping, ...) {
@@ -294,7 +298,7 @@ pairwise_scatter <- ggpairs(
 )
 
 ggsave(
-  "outputs/pairwise_scatter.png",
+  "output/pairwise_scatter.png",
   plot = pairwise_scatter,
   width = 30,
   height = 30,
