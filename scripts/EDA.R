@@ -16,6 +16,7 @@ source("scripts/functions/clean_colname.R")
 source("scripts/functions/read_standard_stats.R")
 source("scripts/functions/read_squad_goalkeeping.R")
 source("scripts/functions/read_squad_shooting.R")
+source("scripts/functions/read_squad_passing.R")
 
 #read in data and parse
 standard_files <- list.files(
@@ -39,13 +40,27 @@ shooting_files <- list.files(
 ) |>
   set_names()
 
+passing_files <- list.files(
+  "inputs",
+  full.names = TRUE,
+  pattern = "Passing"
+) |>
+  set_names()
+
 standard_df <- read_standard_stats(standard_files)
 
 gk_df <- read_squad_goalkeeping(gk_files)
 
 shooting_df <- read_squad_shooting(shooting_files)
 
-fbref_data <- list(standard_df, gk_df, shooting_df) |>
+passing_df <- read_squad_passing(passing_files)
+
+fbref_data <- list(
+  standard_df,
+  gk_df,
+  shooting_df,
+  passing_df
+) |>
   reduce(left_join, by = "squad")
 
 glimpse(fbref_data)
@@ -87,8 +102,12 @@ fbref_data <- fbref_data |>
     sh_fk,
     sh_pk,
     xg_per_shot_np,
-    g_minus_xg_np
+    g_minus_xg_np,
+    #passing
+    starts_with("pass")
   )
+
+glimpse(fbref_data)
 
 #cluster
 fbref_data_no_squad <- select(fbref_data, -squad)
@@ -188,9 +207,45 @@ pca_rot |>
   ) +
   coord_obs_pred()
 
+pca_rot |>
+  ggplot(aes(PC1, PC3)) +
+  geom_segment(xend = 0, yend = 0, arrow = arrow_style, lwd = .2) +
+  geom_point(
+    data = pca_outliers,
+    color = "#904C2F"
+  ) +
+  geom_label_repel(
+    data = pca_outliers,
+    aes(label = common_name),
+    color = "#904C2F"
+  ) +
+  coord_obs_pred()
+
+pca_rot |>
+  ggplot(aes(PC2, PC3)) +
+  geom_segment(xend = 0, yend = 0, arrow = arrow_style, lwd = .2) +
+  geom_point(
+    data = pca_outliers,
+    color = "#904C2F"
+  ) +
+  geom_label_repel(
+    data = pca_outliers,
+    aes(label = common_name),
+    color = "#904C2F"
+  ) +
+  coord_obs_pred()
+
+pca_rot
+
 pca_fit |>
   augment(fbref_data) |>
   ggplot(aes(.fittedPC1, .fittedPC2, label = squad)) +
+  geom_point() +
+  geom_label_repel()
+
+pca_fit |>
+  augment(fbref_data) |>
+  ggplot(aes(.fittedPC1, .fittedPC3, label = squad)) +
   geom_point() +
   geom_label_repel()
 
