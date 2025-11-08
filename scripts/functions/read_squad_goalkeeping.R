@@ -40,10 +40,11 @@ read_squad_goalkeeping <- function(files) {
       pk_save_percent
     ) |>
     rename(
-      goals_a = ga,
-      sot_a = so_ta,
+      goals_against = ga,
+      sot_against = so_ta,
       save_pct = save_percent,
       clean_sheet_pct = cs_percent,
-      pk_save_pct = pk_save_percent
+      pk_save_pct = pk_save_percent,
+      pk_against = pk_a
     )
 }
