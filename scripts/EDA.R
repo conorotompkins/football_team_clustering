@@ -81,13 +81,17 @@ fbref_data <- fbref_data |>
     starts_with("sh_pk"),
     starts_with("cards"),
     starts_with("progressive_carries"),
+    #shooting
     starts_with("xg"),
     starts_with("xgassisted"),
     starts_with("sh"),
     starts_with("sot"),
     starts_with("goals_per"),
     starts_with("avg_shot_dist"),
-    starts_with("g_minus")
+    starts_with("g_minus"),
+    #passing
+    starts_with("pass"),
+    starts_with("defense")
   )
 
 glimpse(fbref_data)
@@ -104,7 +108,7 @@ hclust_wss_plot <- fviz_nbclust(
 
 hclust_wss_plot
 
-nclust_hclust <- 5
+nclust_hclust <- 4
 
 hc_spec <- hier_clust(
   num_clusters = nclust_hclust,
@@ -153,12 +157,13 @@ pca_rot |>
   ) |>
   arrange(pc, desc(rot_abs)) |>
   group_by(pc) |>
-  slice_max(rot_abs, n = 3) |>
+  slice_max(rot_abs, n = 5) |>
   mutate(variable = reorder_within(variable, by = rot_abs, within = pc)) |>
   ggplot(aes(x = rot_abs, y = variable, fill = sign)) +
   geom_col() +
+  scale_x_continuous(expand = expansion(mult = c(0, .3))) +
   scale_y_reordered() +
-  facet_wrap(vars(pc), scales = "free_y")
+  facet_wrap(vars(pc), scales = "free")
 
 # define arrow style for plotting
 arrow_style <- arrow(
@@ -168,29 +173,19 @@ arrow_style <- arrow(
   length = grid::unit(3, "pt")
 )
 
-pca_outliers <- pca_rot |>
-  filter(
-    PC1 == max(PC1) |
-      PC2 == max(PC2) |
-      PC3 == max(PC3) |
-      PC1 == min(PC1) |
-      PC2 == min(PC2) |
-      PC3 == min(PC3)
-  )
-
 pca_outliers_max <- pca_rot |>
   select(common_name, PC1:PC3) |>
   pivot_longer(-common_name) |>
   group_by(name) |>
-  slice_max(order_by = value, n = 1) |>
+  slice_max(order_by = value, n = 2) |>
   ungroup() |>
   distinct(common_name)
 
 pca_outliers_min <- pca_rot |>
-  select(common_name, PC1:PC3) |>
+  select(common_name, PC1:PC2) |>
   pivot_longer(-common_name) |>
   group_by(name) |>
-  slice_min(order_by = value, n = 1) |>
+  slice_min(order_by = value, n = 2) |>
   ungroup() |>
   distinct(common_name)
 
@@ -254,7 +249,7 @@ team_pca |>
   geom_point(aes(color = comp)) +
   geom_label_repel(
     data = team_pca |>
-      filter(percent_rank(abs(PC1)) > .95 | percent_rank(abs(PC2)) > .95),
+      filter(percent_rank(abs(PC1)) > .99 | percent_rank(abs(PC2)) > .99),
     aes(fill = comp)
   )
 
@@ -263,7 +258,7 @@ team_pca |>
   geom_point(aes(color = comp)) +
   geom_label_repel(
     data = team_pca |>
-      filter(percent_rank(abs(PC2)) > .95 | percent_rank(abs(PC3)) > .95),
+      filter(percent_rank(abs(PC2)) > .99 | percent_rank(abs(PC3)) > .99),
     aes(fill = comp)
   )
 
@@ -272,9 +267,61 @@ team_pca |>
   geom_point(aes(color = comp)) +
   geom_label_repel(
     data = team_pca |>
-      filter(percent_rank(abs(PC1)) > .95 | percent_rank(abs(PC3)) > .95),
+      filter(percent_rank(abs(PC1)) > .99 | percent_rank(abs(PC3)) > .99),
     aes(fill = comp)
   )
+
+#graph pc1 by team over time compared to global distribution
+
+pctiles <- c(.01, .25, .5, .75, .99)
+pctiles_labs <- (pctiles * 100) |> str_pad(width = 2, side = "left", pad = "0")
+
+pc1_pctiles <- team_pca |>
+  reframe(
+    value = quantile(PC1, probs = pctiles),
+    pctile_name = pctiles_labs,
+    .by = season_end_year
+  ) |>
+  pivot_wider(
+    names_from = pctile_name,
+    values_from = value,
+    names_prefix = "p_"
+  )
+
+team_pca |>
+  filter(squad == "Atlético Madrid") |>
+  ggplot(aes(x = season_end_year)) +
+  geom_ribbon(data = pc1_pctiles, aes(ymin = p_01, ymax = p_99), alpha = .1) +
+  geom_line(data = pc1_pctiles, aes(y = p_50)) +
+  geom_line(aes(y = PC1), color = "lightblue", lwd = 2) +
+  labs(y = "PC1")
+
+#graph pc2 by team over time compared to global distribution
+
+pctiles <- c(.01, .25, .5, .75, .99)
+pctiles_labs <- (pctiles * 100) |> str_pad(width = 2, side = "left", pad = "0")
+
+pc2_pctiles <- team_pca |>
+  reframe(
+    value = quantile(PC2, probs = pctiles),
+    pctile_name = pctiles_labs,
+    .by = season_end_year
+  ) |>
+  pivot_wider(
+    names_from = pctile_name,
+    values_from = value,
+    names_prefix = "p_"
+  )
+
+pc2_pctiles
+
+team_pca |>
+  filter(squad == "Atlético Madrid") |>
+  ggplot(aes(x = season_end_year)) +
+  geom_ribbon(data = pc2_pctiles, aes(ymin = p_01, ymax = p_99), alpha = .1) +
+  geom_line(data = pc2_pctiles, aes(y = p_50)) +
+  geom_line(aes(y = PC2), color = "lightblue", lwd = 2) +
+  labs(y = "PC2")
 
 #pairwise scatter
 my_fn <- function(data, mapping, ...) {
