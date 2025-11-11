@@ -192,7 +192,6 @@ df_defense <- load_fb_big5_advanced_season_stats(
 df_defense <- df_defense |>
   rename_with(clean_colname) |>
   clean_names() |>
-  glimpse() |>
   select(
     -c(
       num_players,
@@ -218,29 +217,109 @@ df_defense <- df_defense |>
     clearances = clr,
     error_sh_against = err
   ) |>
-  glimpse() |>
   rename_with(
     ~ str_c("defense_", .x),
     .cols = -c(comp, season_end_year, squad, team_or_opponent)
   ) |>
-  glimpse() |>
   pivot_wider(
     id_cols = c(season_end_year, squad, comp),
     names_from = team_or_opponent,
     values_from = 5:16
   )
 
+####goalkeeping
+df_goalkeeping <- load_fb_big5_advanced_season_stats(
+  season_end_year = c(2019:2023),
+  stat_type = "keepers",
+  team_or_player = "team"
+) |>
+  as_tibble()
+
+df_goalkeeping <- df_goalkeeping |>
+  rename_with(clean_colname) |>
+  clean_names() |>
+  glimpse() |>
+  select(
+    -c(
+      num_players,
+      mp_playing,
+      starts_playing,
+      min_playing,
+      mins_per_90,
+      ga,
+      ga90,
+      w,
+      d,
+      l,
+      cs,
+      url
+    )
+  ) |>
+  rename(
+    clean_sheet_pct = cs_percent,
+    sh_pk = p_katt_penalty,
+    pk_against = pka_penalty,
+    pk_against_saved = p_ksv_penalty,
+    pk_against_missed = p_km_penalty,
+    pk_save_pct = save_percent_penalty
+  ) |>
+  mutate(
+    pk_save_pct = case_when(
+      pk_against == 0 & pk_against_saved == 0 ~ 0,
+      .default = pk_save_pct
+    )
+  ) |>
+  rename_with(
+    ~ str_c("goalkeeping", .x),
+    .cols = -c(comp, season_end_year, squad, team_or_opponent)
+  ) |>
+  pivot_wider(
+    id_cols = c(season_end_year, squad, comp),
+    names_from = team_or_opponent,
+    values_from = 5:13
+  )
+
+glimpse(df_goalkeeping)
+
+df_goalkeeping |>
+  pivot_longer(
+    cols = -c(season_end_year, comp, squad),
+    values_transform = as.character
+  ) |>
+  summarize(pct_na = mean(is.na(value)), .by = c(season_end_year, comp)) |>
+  arrange(desc(pct_na))
+
+df_goalkeeping |>
+  pivot_longer(
+    cols = -c(season_end_year, comp, squad),
+    values_transform = as.character
+  ) |>
+  summarize(
+    pct_na = mean(is.na(value)),
+    .by = c(season_end_year, comp, name)
+  ) |>
+  arrange(desc(pct_na))
 
 ####combine
-
 fbref_data <- list(
   df_standard,
   df_shooting,
   df_passing,
-  df_defense
+  df_defense,
+  df_goalkeeping
 ) |>
   reduce(left_join, by = c("squad", "comp", "season_end_year"))
 
 glimpse(fbref_data)
+
+fbref_data |>
+  pivot_longer(
+    cols = -c(season_end_year, comp, squad),
+    values_transform = as.character
+  ) |>
+  summarize(pct_na = mean(is.na(value)), .by = c(season_end_year, comp)) |>
+  filter(pct_na > 0) |>
+  nrow() ==
+  0
 
 write_csv(fbref_data, "input/cleaned/fbref_data_cleaned.csv")

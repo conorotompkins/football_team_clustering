@@ -91,7 +91,8 @@ fbref_data <- fbref_data |>
     starts_with("g_minus"),
     #passing
     starts_with("pass"),
-    starts_with("defense")
+    starts_with("defense"),
+    starts_with("goalkeeping")
   )
 
 glimpse(fbref_data)
@@ -177,15 +178,15 @@ pca_outliers_max <- pca_rot |>
   select(common_name, PC1:PC3) |>
   pivot_longer(-common_name) |>
   group_by(name) |>
-  slice_max(order_by = value, n = 2) |>
+  slice_max(order_by = value, n = 3) |>
   ungroup() |>
   distinct(common_name)
 
 pca_outliers_min <- pca_rot |>
-  select(common_name, PC1:PC2) |>
+  select(common_name, PC1:PC3) |>
   pivot_longer(-common_name) |>
   group_by(name) |>
-  slice_min(order_by = value, n = 2) |>
+  slice_min(order_by = value, n = 3) |>
   ungroup() |>
   distinct(common_name)
 
@@ -289,7 +290,7 @@ pc1_pctiles <- team_pca |>
   )
 
 team_pca |>
-  filter(squad == "Atlético Madrid") |>
+  filter(squad == "Manchester City") |>
   ggplot(aes(x = season_end_year)) +
   geom_ribbon(data = pc1_pctiles, aes(ymin = p_01, ymax = p_99), alpha = .1) +
   geom_line(data = pc1_pctiles, aes(y = p_50)) +
@@ -316,7 +317,7 @@ pc2_pctiles <- team_pca |>
 pc2_pctiles
 
 team_pca |>
-  filter(squad == "Atlético Madrid") |>
+  filter(squad == "Manchester City") |>
   ggplot(aes(x = season_end_year)) +
   geom_ribbon(data = pc2_pctiles, aes(ymin = p_01, ymax = p_99), alpha = .1) +
   geom_line(data = pc2_pctiles, aes(y = p_50)) +
