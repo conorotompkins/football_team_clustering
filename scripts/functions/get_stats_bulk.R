@@ -181,6 +181,51 @@ df_passing <- df_passing |>
     values_from = 5:22
   )
 
+####pass types
+df_pass_types <- load_fb_big5_advanced_season_stats(
+  season_end_year = c(2019:2023),
+  stat_type = "passing_types",
+  team_or_player = "team"
+) |>
+  as_tibble()
+
+df_pass_types <- df_pass_types |>
+  rename_with(clean_colname) |>
+  clean_names() |>
+  select(
+    -c(
+      num_players,
+      starts_with("mins"),
+      url
+    )
+  ) |>
+  rename(
+    attempted = att,
+    type_free_kick = fk_pass,
+    type_throughball = tb_pass,
+    type_switch = sw_pass,
+    type_cross = crs_pass,
+    type_throw_in = ti_pass,
+    type_corner = ck_pass,
+    type_corner_in = in_corner,
+    type_corner_out = out_corner,
+    type_corner_straight = str_corner,
+    completed = cmp_outcomes,
+    offsides = off_outcomes,
+    blocked_by_opp = blocks_outcomes
+  ) |>
+  rename_with(
+    ~ str_c("pass_types_", .x),
+    .cols = -c(comp, season_end_year, squad, team_or_opponent)
+  ) |>
+  pivot_wider(
+    id_cols = c(season_end_year, squad, comp),
+    names_from = team_or_opponent,
+    values_from = 5:19
+  )
+
+glimpse(df_pass_types)
+
 ####defense
 df_defense <- load_fb_big5_advanced_season_stats(
   season_end_year = c(2019:2023),
@@ -361,6 +406,7 @@ fbref_data <- list(
   df_standard,
   df_shooting,
   df_passing,
+  df_pass_types,
   df_defense,
   df_goalkeeping,
   df_goalkeeping_adv

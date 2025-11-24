@@ -7,6 +7,7 @@ library(tune)
 library(ggrepel)
 library(GGally)
 library(tidytext)
+library(plotly)
 
 options(scipen = 999, digits = 4)
 
@@ -91,6 +92,7 @@ fbref_data <- fbref_data |>
     starts_with("g_minus"),
     #passing
     starts_with("pass"),
+    starts_with("pass_types"),
     starts_with("defense"),
     starts_with("goalkeeping"),
     starts_with("goalkeeping_adv")
@@ -146,7 +148,7 @@ pca_rot <- pca_fit |>
   rename(common_name = column)
 
 pca_rot |>
-  select(1:6) |>
+  select(1:7) |>
   pivot_longer(cols = starts_with("PC")) |>
   rename(
     pc = name,
@@ -244,7 +246,7 @@ team_pca <- pca_fit |>
   select(-.rownames) |>
   rename_with(~ str_remove(.x, ".fitted")) |>
   mutate(id = str_c(squad, season_end_year, sep = "\n")) |>
-  select(comp, season_end_year, squad, id, PC1:PC3)
+  select(comp, season_end_year, squad, id, PC1:PC5)
 
 team_pca |>
   ggplot(aes(PC1, PC2, label = id)) +
@@ -269,6 +271,45 @@ team_pca |>
     data = team_pca |>
       filter(percent_rank(abs(PC1)) > .99 | percent_rank(abs(PC3)) > .99)
   )
+
+team_pca |>
+  ggplot(aes(PC1, PC4, label = id)) +
+  geom_point(aes(color = comp)) +
+  geom_label_repel(
+    data = team_pca |>
+      filter(percent_rank(abs(PC1)) > .99 | percent_rank(abs(PC4)) > .99)
+  )
+
+team_pca |>
+  ggplot(aes(PC1, PC5, label = id)) +
+  geom_point(aes(color = comp)) +
+  geom_label_repel(
+    data = team_pca |>
+      filter(percent_rank(abs(PC1)) > .99 | percent_rank(abs(PC5)) > .99)
+  )
+
+# Convert the ggplot object to a plotly object for 3D plotting
+p <- plot_ly(
+  team_pca,
+  x = ~PC1,
+  y = ~PC2,
+  z = ~PC3,
+  color = ~comp,
+  type = "scatter3d",
+  mode = "markers",
+  marker = list(size = 3, symbol = "circle")
+) %>%
+  layout(
+    title = "3D Scatter Plot",
+    scene = list(
+      xaxis = list(title = "X Axis"),
+      yaxis = list(title = "Y Axis"),
+      zaxis = list(title = "Z Axis")
+    )
+  )
+
+# Display the 3D scatter plot
+p
 
 #graph pc1 by team over time compared to global distribution
 
