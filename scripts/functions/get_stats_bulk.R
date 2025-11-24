@@ -445,6 +445,50 @@ df_gca <- df_gca |>
     values_from = 5:16
   )
 
+####misc
+df_misc <- load_fb_big5_advanced_season_stats(
+  season_end_year = c(2019:2023),
+  stat_type = "misc",
+  team_or_player = "team"
+) |>
+  as_tibble()
+
+df_misc <- df_misc |>
+  rename_with(clean_colname) |>
+  clean_names() |>
+  select(
+    -c(
+      num_players,
+      mins_per_90,
+      url,
+      crd_y,
+      crd_r,
+      x2crd_y,
+      crs,
+      int,
+      tkl_w,
+      p_kwon,
+      p_kcon,
+      won_percent_aerial
+    )
+  ) |>
+  rename(
+    fouls_committed = fls,
+    fouls_drawn = fld,
+    offsides = off
+  ) |>
+  rename_with(
+    ~ str_c("misc_", .x),
+    .cols = -c(comp, season_end_year, squad, team_or_opponent)
+  ) |>
+  pivot_wider(
+    id_cols = c(season_end_year, squad, comp),
+    names_from = team_or_opponent,
+    values_from = 5:11
+  )
+
+glimpse(df_misc)
+
 ####combine
 fbref_data <- list(
   df_standard,
@@ -454,7 +498,8 @@ fbref_data <- list(
   df_defense,
   df_goalkeeping,
   df_goalkeeping_adv,
-  df_gca
+  df_gca,
+  df_misc
 ) |>
   reduce(left_join, by = c("squad", "comp", "season_end_year"))
 
