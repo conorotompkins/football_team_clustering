@@ -92,7 +92,8 @@ fbref_data <- fbref_data |>
     #passing
     starts_with("pass"),
     starts_with("defense"),
-    starts_with("goalkeeping")
+    starts_with("goalkeeping"),
+    starts_with("goalkeeping_adv")
   )
 
 glimpse(fbref_data)
@@ -123,7 +124,7 @@ hc_fit <- hc_spec |>
 
 str(hc_fit, max.level = 1)
 
-plot(hc_fit$fit, labels = fbref_data$squad)
+plot(hc_fit$fit, labels = FALSE)
 
 #PCA
 
@@ -250,8 +251,7 @@ team_pca |>
   geom_point(aes(color = comp)) +
   geom_label_repel(
     data = team_pca |>
-      filter(percent_rank(abs(PC1)) > .99 | percent_rank(abs(PC2)) > .99),
-    aes(fill = comp)
+      filter(percent_rank(abs(PC1)) > .99 | percent_rank(abs(PC2)) > .99)
   )
 
 team_pca |>
@@ -259,8 +259,7 @@ team_pca |>
   geom_point(aes(color = comp)) +
   geom_label_repel(
     data = team_pca |>
-      filter(percent_rank(abs(PC2)) > .99 | percent_rank(abs(PC3)) > .99),
-    aes(fill = comp)
+      filter(percent_rank(abs(PC2)) > .99 | percent_rank(abs(PC3)) > .99)
   )
 
 team_pca |>
@@ -268,8 +267,7 @@ team_pca |>
   geom_point(aes(color = comp)) +
   geom_label_repel(
     data = team_pca |>
-      filter(percent_rank(abs(PC1)) > .99 | percent_rank(abs(PC3)) > .99),
-    aes(fill = comp)
+      filter(percent_rank(abs(PC1)) > .99 | percent_rank(abs(PC3)) > .99)
   )
 
 #graph pc1 by team over time compared to global distribution

@@ -300,13 +300,70 @@ df_goalkeeping |>
   ) |>
   arrange(desc(pct_na))
 
+####goalkeeping advanced
+df_goalkeeping_adv <- load_fb_big5_advanced_season_stats(
+  season_end_year = c(2019:2023),
+  stat_type = "keepers_adv",
+  team_or_player = "team"
+) |>
+  as_tibble()
+
+df_goalkeeping_adv <- df_goalkeeping_adv |>
+  rename_with(clean_colname) |>
+  clean_names() |>
+  select(
+    -c(
+      num_players,
+      mins_per_90,
+      ga_goals,
+      pka_goals,
+      number_opa_per_90_sweeper,
+      stp_crosses,
+      att_gk_passes,
+      url
+    )
+  ) |>
+  rename(
+    ga_fk = fk_goals,
+    ga_ck = ck_goals,
+    ga_og = og_goals,
+    ps_xg_against = p_sx_g_expected,
+    ps_xg_per_sot = p_sx_g_per_so_t_expected,
+    ps_xg_against_minus_goals_against = p_sx_g_per_minus_expected,
+    gk_pass_launch_att = cmp_launched,
+    gk_pass_launch_success_pct = cmp_percent_launched,
+    gk_pass_att = att_passes,
+    gk_pass_throw_att = thr_passes,
+    gk_pass_launch_pct = launch_percent_passes,
+    gk_pass_avg_length = avg_len_passes,
+    gk_goal_kick_att = att_goal,
+    gk_goal_kick_launch_pct = launch_percent_goal,
+    gk_goal_kick_avg_length = avg_len_goal,
+    gk_cross_against = opp_crosses,
+    gk_cross_stop_pct = stp_percent_crosses,
+    gk_defensive_actions_outside_penalty_area = number_opa_sweeper,
+    gk_avg_distance_sweeper = avg_dist_sweeper
+  ) |>
+  rename_with(
+    ~ str_c("goalkeeping_adv_", .x),
+    .cols = -c(comp, season_end_year, squad, team_or_opponent)
+  ) |>
+  pivot_wider(
+    id_cols = c(season_end_year, squad, comp),
+    names_from = team_or_opponent,
+    values_from = 5:25
+  )
+
+glimpse(df_goalkeeping_adv)
+
 ####combine
 fbref_data <- list(
   df_standard,
   df_shooting,
   df_passing,
   df_defense,
-  df_goalkeeping
+  df_goalkeeping,
+  df_goalkeeping_adv
 ) |>
   reduce(left_join, by = c("squad", "comp", "season_end_year"))
 
