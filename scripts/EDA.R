@@ -95,7 +95,8 @@ fbref_data <- fbref_data |>
     starts_with("pass_types"),
     starts_with("defense"),
     starts_with("goalkeeping"),
-    starts_with("goalkeeping_adv")
+    starts_with("goalkeeping_adv"),
+    matches("^sca|^gca")
   )
 
 glimpse(fbref_data)

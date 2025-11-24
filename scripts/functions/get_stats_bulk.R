@@ -401,6 +401,50 @@ df_goalkeeping_adv <- df_goalkeeping_adv |>
 
 glimpse(df_goalkeeping_adv)
 
+####gca
+df_gca <- load_fb_big5_advanced_season_stats(
+  season_end_year = c(2019:2023),
+  stat_type = "gca",
+  team_or_player = "team"
+) |>
+  as_tibble()
+
+glimpse(df_gca)
+
+df_gca <- df_gca |>
+  rename_with(clean_colname) |>
+  clean_names() |>
+  select(
+    -c(
+      num_players,
+      mins_per_90,
+      sca_sca,
+      sca90_sca,
+      gca_gca,
+      gca90_gca,
+      url
+    )
+  ) |>
+  rename(
+    sca_from_pass_live = pass_live_sca,
+    sca_from_pass_dead = pass_dead_sca,
+    sca_from_takeon = to_sca,
+    sca_from_shot = sh_sca,
+    sca_from_foul = fld_sca,
+    sca_from_defense = def_sca,
+    gca_from_pass_live = pass_live_gca,
+    gca_from_pass_dead = pass_dead_gca,
+    gca_from_takeon = to_gca,
+    gca_from_shot = sh_gca,
+    gca_from_foul = fld_gca,
+    gca_from_defense = def_gca
+  ) |>
+  pivot_wider(
+    id_cols = c(season_end_year, squad, comp),
+    names_from = team_or_opponent,
+    values_from = 5:16
+  )
+
 ####combine
 fbref_data <- list(
   df_standard,
@@ -409,7 +453,8 @@ fbref_data <- list(
   df_pass_types,
   df_defense,
   df_goalkeeping,
-  df_goalkeeping_adv
+  df_goalkeeping_adv,
+  df_gca
 ) |>
   reduce(left_join, by = c("squad", "comp", "season_end_year"))
 
