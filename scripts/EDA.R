@@ -96,7 +96,9 @@ fbref_data <- fbref_data |>
     starts_with("defense"),
     starts_with("goalkeeping"),
     starts_with("goalkeeping_adv"),
-    matches("^sca|^gca")
+    matches("^sca|^gca"),
+    starts_with("misc"),
+    starts_with("poss")
   )
 
 glimpse(fbref_data)
@@ -303,9 +305,9 @@ p <- plot_ly(
   layout(
     title = "3D Scatter Plot",
     scene = list(
-      xaxis = list(title = "X Axis"),
-      yaxis = list(title = "Y Axis"),
-      zaxis = list(title = "Z Axis")
+      xaxis = list(title = "PC1"),
+      yaxis = list(title = "PC2"),
+      zaxis = list(title = "PC3")
     )
   )
 

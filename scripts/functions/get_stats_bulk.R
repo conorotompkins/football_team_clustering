@@ -272,6 +272,63 @@ df_defense <- df_defense |>
     values_from = 5:16
   )
 
+####possession
+df_possession <- load_fb_big5_advanced_season_stats(
+  season_end_year = c(2019:2023),
+  stat_type = "possession",
+  team_or_player = "team"
+) |>
+  as_tibble()
+
+glimpse(df_possession)
+
+df_possession <- df_possession |>
+  rename_with(clean_colname) |>
+  clean_names() |>
+  select(
+    -c(
+      num_players,
+      mins_per_90,
+      url,
+      succ_take,
+      tkld_take
+    )
+  ) |>
+  rename(
+    possession = poss,
+    touches = touches_touches,
+    touches_def_pen = def_pen_touches,
+    touches_def_third = def_3rd_touches,
+    touches_mid_third = mid_3rd_touches,
+    touches_att_third = att_3rd_touches,
+    touches_att_pen = att_pen_touches,
+    touches_live = live_touches,
+    takeon_attempts = att_take,
+    takeon_success_pct = succ_percent_take,
+    takeon_attempts_tackled = tkld_percent_take,
+    carries = carries_carries,
+    carries_dist_total = tot_dist_carries,
+    carries_dist_prog = prg_dist_carries,
+    carries_prog_count = prg_c_carries,
+    carries_enter_final_third = final_third_carries,
+    carries_enter_pen = cpa_carries,
+    carries_miscontrolled = mis_carries,
+    carries_dispossed = dis_carries,
+    passes_received = rec_receiving,
+    passes_prog_received = prg_r_receiving
+  ) |>
+  rename_with(
+    ~ str_c("poss_", .x),
+    .cols = -c(comp, season_end_year, squad, team_or_opponent)
+  ) |>
+  pivot_wider(
+    id_cols = c(season_end_year, squad, comp),
+    names_from = team_or_opponent,
+    values_from = 5:25
+  )
+
+glimpse(df_possession)
+
 ####goalkeeping
 df_goalkeeping <- load_fb_big5_advanced_season_stats(
   season_end_year = c(2019:2023),
@@ -283,7 +340,6 @@ df_goalkeeping <- load_fb_big5_advanced_season_stats(
 df_goalkeeping <- df_goalkeeping |>
   rename_with(clean_colname) |>
   clean_names() |>
-  glimpse() |>
   select(
     -c(
       num_players,
@@ -496,6 +552,7 @@ fbref_data <- list(
   df_passing,
   df_pass_types,
   df_defense,
+  df_possession,
   df_goalkeeping,
   df_goalkeeping_adv,
   df_gca,
