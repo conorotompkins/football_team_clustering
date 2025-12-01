@@ -115,7 +115,7 @@ hclust_wss_plot <- fviz_nbclust(
 
 hclust_wss_plot
 
-nclust_hclust <- 4
+nclust_hclust <- 5
 
 hc_spec <- hier_clust(
   num_clusters = nclust_hclust,
@@ -359,7 +359,7 @@ pc2_pctiles <- team_pca |>
 pc2_pctiles
 
 team_pca |>
-  filter(squad == "Manchester City") |>
+  filter(squad == "Eibar") |>
   ggplot(aes(x = season_end_year)) +
   geom_ribbon(data = pc2_pctiles, aes(ymin = p_01, ymax = p_99), alpha = .1) +
   geom_line(data = pc2_pctiles, aes(y = p_50)) +

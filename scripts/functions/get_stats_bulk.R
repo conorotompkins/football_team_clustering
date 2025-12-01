@@ -20,7 +20,6 @@ df_standard <- df_standard |>
       starts_with("mp"),
       starts_with("starts"),
       starts_with("mins"),
-      min_playing,
       prg_p_progression,
       ends_with("per"),
       url
@@ -43,10 +42,18 @@ df_standard <- df_standard |>
     xg_plus_xa_np = `npx_g_x_ag_expected`,
     progressive_carries = prg_c_progression
   ) |>
+  select(
+    season_end_year,
+    squad,
+    comp,
+    min_playing,
+    team_or_opponent,
+    everything()
+  ) |>
   pivot_wider(
-    id_cols = c(season_end_year, squad, comp),
+    id_cols = c(season_end_year, squad, comp, min_playing),
     names_from = team_or_opponent,
-    values_from = 5:20
+    values_from = 6:21
   ) |>
   select(
     -c(
@@ -561,6 +568,47 @@ fbref_data <- list(
   reduce(left_join, by = c("squad", "comp", "season_end_year"))
 
 glimpse(fbref_data)
+
+per90_vars <- fbref_data |>
+  select(
+    -c(
+      squad,
+      comp,
+      season_end_year,
+      min_playing,
+      age_avg_team,
+      num_players_team,
+      contains("pct")
+    )
+  ) |>
+  names()
+
+fbref_data <- fbref_data |>
+  mutate(across(per90_vars, ~ (.x / min_playing) * 90))
+
+fbref_data
+
+# fbref_data |>
+#   select(comp, squad, season_end_year, min_playing) |>
+#   arrange(comp, season_end_year) |>
+#   distinct(comp, season_end_year, min_playing) |>
+#   view()
+
+# fbref_data |>
+#   select(comp, squad, season_end_year, min_playing) |>
+#   arrange(comp, squad, season_end_year) |>
+#   filter(comp == 'Ligue 1', season_end_year == 2020) |>
+#   distinct(comp, squad, season_end_year, min_playing) |>
+#   view()
+
+# fbref_data |>
+#   select(comp, squad, season_end_year, min_playing) |>
+#   arrange(comp, squad, season_end_year) |>
+#   mutate(id = str_c(comp, squad, season_end_year)) |>
+#   #filter(squad == "Tottenham") |>
+#   ggplot(aes(season_end_year, min_playing, color = comp, group = 1)) +
+#   geom_line() +
+#   facet_wrap(vars(comp))
 
 fbref_data |>
   pivot_longer(
