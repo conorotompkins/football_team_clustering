@@ -71,34 +71,32 @@ glimpse(fbref_data)
 
 fbref_data <- fbref_data |>
   select(
+    -c(
+      starts_with("std_goals"),
+      starts_with("std_assists"),
+      std_xg_team,
+      std_xg_opponent,
+      std_xg_np_team,
+      std_xg_np_opponent,
+      std_xg_plus_xa_np_team,
+      std_xg_plus_xa_np_opponent,
+      starts_with("shooting_gls")
+    )
+  ) |>
+  select(
     comp,
     season_end_year,
     squad,
-    #standard
-    num_players_team,
-    age_avg_team,
-    starts_with("possession_pct"),
-    starts_with("pk_made"),
-    starts_with("sh_pk"),
-    starts_with("cards"),
-    starts_with("progressive_carries"),
-    #shooting
-    starts_with("xg"),
-    starts_with("xgassisted"),
-    starts_with("sh"),
-    starts_with("sot"),
-    starts_with("goals_per"),
-    starts_with("avg_shot_dist"),
-    starts_with("g_minus"),
-    #passing
+    starts_with("std"),
+    starts_with("shooting"),
     starts_with("pass"),
     starts_with("pass_types"),
     starts_with("defense"),
     starts_with("goalkeeping"),
     starts_with("goalkeeping_adv"),
-    matches("^sca|^gca"),
+    starts_with("gca"),
     starts_with("misc"),
-    starts_with("poss")
+    starts_with("possession")
   )
 
 glimpse(fbref_data)
@@ -170,7 +168,8 @@ pca_rot |>
   geom_col() +
   scale_x_continuous(expand = expansion(mult = c(0, .3))) +
   scale_y_reordered() +
-  facet_wrap(vars(pc), scales = "free")
+  facet_wrap(vars(pc), scales = "free") +
+  theme(axis.text.y = element_text(size = 7))
 
 # define arrow style for plotting
 arrow_style <- arrow(

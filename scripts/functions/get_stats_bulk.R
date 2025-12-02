@@ -12,6 +12,8 @@ df_standard <- load_fb_big5_advanced_season_stats(
 ) |>
   as_tibble()
 
+glimpse(df_standard)
+
 df_standard <- df_standard |>
   rename_with(clean_colname) |>
   clean_names() |>
@@ -46,9 +48,13 @@ df_standard <- df_standard |>
     season_end_year,
     squad,
     comp,
-    min_playing,
     team_or_opponent,
+    min_playing,
     everything()
+  ) |>
+  rename_with(
+    ~ str_c("std_", .x),
+    .cols = -c(comp, season_end_year, squad, team_or_opponent, min_playing)
   ) |>
   pivot_wider(
     id_cols = c(season_end_year, squad, comp, min_playing),
@@ -57,10 +63,12 @@ df_standard <- df_standard |>
   ) |>
   select(
     -c(
-      num_players_opponent,
-      age_avg_opponent
+      std_num_players_opponent,
+      std_age_avg_opponent
     )
   )
+
+glimpse(df_standard)
 
 df_standard |>
   pivot_longer(
@@ -89,6 +97,8 @@ df_shooting <- load_fb_big5_advanced_season_stats(
 ) |>
   as_tibble()
 
+glimpse(df_shooting)
+
 df_shooting <- df_shooting |>
   rename_with(clean_colname) |>
   clean_names() |>
@@ -106,19 +116,28 @@ df_shooting <- df_shooting |>
     )
   ) |>
   rename(
-    sot_standard = so_t_standard,
-    sot_pct_standard = so_t_percent_standard,
-    g_per_sot_standard = g_per_so_t_standard,
+    gls = gls_standard,
+    shots = sh_standard,
+    sot = so_t_standard,
+    sot_pct = so_t_percent_standard,
+    g_per_sh = g_per_sh_standard,
+    g_per_sot = g_per_so_t_standard,
     avg_sh_dist = dist_standard,
     sh_fk = fk_standard,
     xg_per_sh = npx_g_per_sh_expected,
     g_minus_xg_np = np_g_minus_x_g_expected
+  ) |>
+  rename_with(
+    ~ str_c("shooting_", .x),
+    .cols = -c(comp, season_end_year, squad, team_or_opponent)
   ) |>
   pivot_wider(
     id_cols = c(season_end_year, squad, comp),
     names_from = team_or_opponent,
     values_from = 5:14
   )
+
+glimpse(df_shooting)
 
 df_shooting |>
   pivot_longer(
@@ -159,18 +178,18 @@ df_passing <- df_passing |>
       url
     )
   ) |>
+  select(
+    -c(
+      cmp_total,
+      cmp_short,
+      cmp_medium,
+      cmp_long,
+      ast
+    )
+  ) |>
   rename_with(
     ~ str_c("pass_", .x),
     .cols = -c(comp, season_end_year, squad, team_or_opponent)
-  ) |>
-  select(
-    -c(
-      pass_cmp_total,
-      pass_cmp_short,
-      pass_cmp_medium,
-      pass_cmp_long,
-      pass_ast
-    )
   ) |>
   rename(
     pass_xassisted_gls = pass_x_ag,
@@ -187,6 +206,8 @@ df_passing <- df_passing |>
     names_from = team_or_opponent,
     values_from = 5:22
   )
+
+glimpse(df_passing)
 
 ####pass types
 df_pass_types <- load_fb_big5_advanced_season_stats(
@@ -279,6 +300,8 @@ df_defense <- df_defense |>
     values_from = 5:16
   )
 
+glimpse(df_defense)
+
 ####possession
 df_possession <- load_fb_big5_advanced_season_stats(
   season_end_year = c(2019:2023),
@@ -325,7 +348,7 @@ df_possession <- df_possession |>
     passes_prog_received = prg_r_receiving
   ) |>
   rename_with(
-    ~ str_c("poss_", .x),
+    ~ str_c("possession_", .x),
     .cols = -c(comp, season_end_year, squad, team_or_opponent)
   ) |>
   pivot_wider(
@@ -378,7 +401,7 @@ df_goalkeeping <- df_goalkeeping |>
     )
   ) |>
   rename_with(
-    ~ str_c("goalkeeping", .x),
+    ~ str_c("goalkeeping_", .x),
     .cols = -c(comp, season_end_year, squad, team_or_opponent)
   ) |>
   pivot_wider(
@@ -502,11 +525,17 @@ df_gca <- df_gca |>
     gca_from_foul = fld_gca,
     gca_from_defense = def_gca
   ) |>
+  rename_with(
+    ~ str_c("gca_", .x),
+    .cols = -c(comp, season_end_year, squad, team_or_opponent)
+  ) |>
   pivot_wider(
     id_cols = c(season_end_year, squad, comp),
     names_from = team_or_opponent,
     values_from = 5:16
   )
+
+glimpse(df_gca)
 
 ####misc
 df_misc <- load_fb_big5_advanced_season_stats(
@@ -576,17 +605,17 @@ per90_vars <- fbref_data |>
       comp,
       season_end_year,
       min_playing,
-      age_avg_team,
-      num_players_team,
+      std_age_avg_team,
+      std_num_players_team,
       contains("pct")
     )
   ) |>
   names()
 
 fbref_data <- fbref_data |>
-  mutate(across(per90_vars, ~ (.x / min_playing) * 90))
+  mutate(across(all_of(per90_vars), ~ (.x / min_playing) * 90))
 
-fbref_data
+glimpse(fbref_data)
 
 # fbref_data |>
 #   select(comp, squad, season_end_year, min_playing) |>
