@@ -1,0 +1,665 @@
+library(worldfootballR)
+library(tidyverse)
+library(janitor)
+
+source("scripts/functions/clean_colname.R")
+
+####standard
+df_standard <- load_fb_big5_advanced_season_stats(
+  season_end_year = c(2019:2023),
+  stat_type = "standard",
+  team_or_player = "team"
+) |>
+  as_tibble()
+
+glimpse(df_standard)
+
+df_standard <- df_standard |>
+  rename_with(clean_colname) |>
+  clean_names() |>
+  select(
+    -c(
+      starts_with("mp"),
+      starts_with("starts"),
+      starts_with("mins"),
+      prg_p_progression,
+      ends_with("per"),
+      url
+    )
+  ) |>
+  rename(
+    age_avg = age,
+    possession_pct = poss,
+    goals = gls,
+    assists = ast,
+    goals_plus_assists = g_a,
+    goals_np = g_minus_pk,
+    pk_made = pk,
+    sh_pk_attempted = p_katt,
+    cards_yellow = crd_y,
+    cards_red = crd_r,
+    xg = x_g_expected,
+    xg_np = npx_g_expected,
+    xassisted_goals = x_ag_expected,
+    xg_plus_xa_np = `npx_g_x_ag_expected`,
+    progressive_carries = prg_c_progression
+  ) |>
+  select(
+    season_end_year,
+    squad,
+    comp,
+    team_or_opponent,
+    min_playing,
+    everything()
+  ) |>
+  rename_with(
+    ~ str_c("std_", .x),
+    .cols = -c(comp, season_end_year, squad, team_or_opponent, min_playing)
+  ) |>
+  pivot_wider(
+    id_cols = c(season_end_year, squad, comp, min_playing),
+    names_from = team_or_opponent,
+    values_from = 6:21
+  ) |>
+  select(
+    -c(
+      std_num_players_opponent,
+      std_age_avg_opponent
+    )
+  )
+
+glimpse(df_standard)
+
+df_standard |>
+  pivot_longer(
+    cols = -c(season_end_year, comp, squad),
+    values_transform = as.character
+  ) |>
+  summarize(pct_na = mean(is.na(value)), .by = c(season_end_year, comp)) |>
+  arrange(desc(pct_na))
+
+df_standard |>
+  pivot_longer(
+    cols = -c(season_end_year, comp, squad),
+    values_transform = as.character
+  ) |>
+  summarize(
+    pct_na = mean(is.na(value)),
+    .by = c(season_end_year, comp, name)
+  ) |>
+  arrange(desc(pct_na))
+
+####shooting
+df_shooting <- load_fb_big5_advanced_season_stats(
+  season_end_year = c(2019:2023),
+  stat_type = "shooting",
+  team_or_player = "team"
+) |>
+  as_tibble()
+
+glimpse(df_shooting)
+
+df_shooting <- df_shooting |>
+  rename_with(clean_colname) |>
+  clean_names() |>
+  select(
+    -c(
+      contains("per_90"),
+      ends_with("per"),
+      num_players,
+      pk_standard,
+      x_g_expected,
+      p_katt_standard,
+      npx_g_expected,
+      g_minus_x_g_expected,
+      url
+    )
+  ) |>
+  rename(
+    gls = gls_standard,
+    shots = sh_standard,
+    sot = so_t_standard,
+    sot_pct = so_t_percent_standard,
+    g_per_sh = g_per_sh_standard,
+    g_per_sot = g_per_so_t_standard,
+    avg_sh_dist = dist_standard,
+    sh_fk = fk_standard,
+    xg_per_sh = npx_g_per_sh_expected,
+    g_minus_xg_np = np_g_minus_x_g_expected
+  ) |>
+  rename_with(
+    ~ str_c("shooting_", .x),
+    .cols = -c(comp, season_end_year, squad, team_or_opponent)
+  ) |>
+  pivot_wider(
+    id_cols = c(season_end_year, squad, comp),
+    names_from = team_or_opponent,
+    values_from = 5:14
+  )
+
+glimpse(df_shooting)
+
+df_shooting |>
+  pivot_longer(
+    cols = -c(season_end_year, comp, squad),
+    values_transform = as.character
+  ) |>
+  summarize(pct_na = mean(is.na(value)), .by = c(season_end_year, comp)) |>
+  arrange(desc(pct_na))
+
+df_shooting |>
+  pivot_longer(
+    cols = -c(season_end_year, comp, squad),
+    values_transform = as.character
+  ) |>
+  summarize(
+    pct_na = mean(is.na(value)),
+    .by = c(season_end_year, comp, name)
+  ) |>
+  arrange(desc(pct_na))
+
+#passing
+df_passing <- load_fb_big5_advanced_season_stats(
+  season_end_year = c(2019:2023),
+  stat_type = "passing",
+  team_or_player = "team"
+) |>
+  as_tibble()
+
+df_passing <- df_passing |>
+  rename_with(clean_colname) |>
+  clean_names() |>
+  select(
+    -c(
+      num_players,
+      starts_with("mins"),
+      x_a_expected,
+      a_minus_x_ag_expected,
+      url
+    )
+  ) |>
+  select(
+    -c(
+      cmp_total,
+      cmp_short,
+      cmp_medium,
+      cmp_long,
+      ast
+    )
+  ) |>
+  rename(
+    passes_attempted_total = att_total,
+    xassisted_gls = x_ag,
+    xassists = x_a,
+    a_minus_xassisted_gls = a_minus_x_ag,
+    key_passes = kp,
+    pass_enter_final_third = final_third,
+    pass_enter_penalty_area = ppa,
+    pass_enter_penalty_area_cross = crs_pa,
+    pass_progressive_completed = prg_p,
+    pass_cmp_pct_total = cmp_percent_total,
+    pass_cmp_pct_short = cmp_percent_short,
+    pass_cmp_pct_medium = cmp_percent_medium,
+    pass_cmp_pct_long = cmp_percent_long,
+    pass_total_distance = tot_dist_total,
+    pass_progressive_total_distance = prg_dist_total,
+    pass_attempts_short = att_short,
+    pass_attemps_medium = att_medium,
+    pass_attempts_long = att_long
+  ) |>
+  rename_with(
+    ~ str_c("passing_", .x),
+    .cols = -c(comp, season_end_year, squad, team_or_opponent)
+  ) |>
+  pivot_wider(
+    id_cols = c(season_end_year, squad, comp),
+    names_from = team_or_opponent,
+    values_from = 5:22
+  )
+
+glimpse(df_passing)
+
+####pass types
+df_pass_types <- load_fb_big5_advanced_season_stats(
+  season_end_year = c(2019:2023),
+  stat_type = "passing_types",
+  team_or_player = "team"
+) |>
+  as_tibble()
+
+df_pass_types <- df_pass_types |>
+  rename_with(clean_colname) |>
+  clean_names() |>
+  select(
+    -c(
+      num_players,
+      starts_with("mins"),
+      att,
+      url
+    )
+  ) |>
+  rename(
+    passes_free_kick = fk_pass,
+    passes_throughball = tb_pass,
+    passes_switch = sw_pass,
+    passes_cross = crs_pass,
+    passes_throw_in = ti_pass,
+    passes_corner = ck_pass,
+    passes_corner_in = in_corner,
+    passes_corner_out = out_corner,
+    passes_corner_straight = str_corner,
+    passes_completed = cmp_outcomes,
+    passes_offsides = off_outcomes,
+    passes_blocked_by_opp = blocks_outcomes
+  ) |>
+  rename_with(
+    ~ str_c("pass_types_", .x),
+    .cols = -c(comp, season_end_year, squad, team_or_opponent)
+  ) |>
+  pivot_wider(
+    id_cols = c(season_end_year, squad, comp),
+    names_from = team_or_opponent,
+    values_from = 5:18
+  )
+
+glimpse(df_pass_types)
+
+####defense
+df_defense <- load_fb_big5_advanced_season_stats(
+  season_end_year = c(2019:2023),
+  stat_type = "defense",
+  team_or_player = "team"
+) |>
+  as_tibble()
+
+df_defense <- df_defense |>
+  rename_with(clean_colname) |>
+  clean_names() |>
+  select(
+    -c(
+      num_players,
+      starts_with("mins"),
+      tkl_challenges,
+      lost_challenges,
+      blocks_blocks,
+      tkl_int,
+      url
+    )
+  ) |>
+  rename(
+    tackles = tkl_tackles,
+    tackles_won_ball = tkl_w_tackles,
+    tackles_def_3rd = def_3rd_tackles,
+    tackles_mid_3rd = mid_3rd_tackles,
+    tackles_att_3rd = att_3rd_tackles,
+    dribbles_challenged = att_challenges,
+    dribbles_challenged_success_pct = tkl_percent_challenges,
+    blocked_shots = sh_blocks,
+    blocked_passes = pass_blocks,
+    interceptions = int,
+    clearances = clr,
+    error_sh_against = err
+  ) |>
+  rename_with(
+    ~ str_c("defense_", .x),
+    .cols = -c(comp, season_end_year, squad, team_or_opponent)
+  ) |>
+  pivot_wider(
+    id_cols = c(season_end_year, squad, comp),
+    names_from = team_or_opponent,
+    values_from = 5:16
+  )
+
+glimpse(df_defense)
+
+####possession
+df_possession <- load_fb_big5_advanced_season_stats(
+  season_end_year = c(2019:2023),
+  stat_type = "possession",
+  team_or_player = "team"
+) |>
+  as_tibble()
+
+glimpse(df_possession)
+
+df_possession <- df_possession |>
+  rename_with(clean_colname) |>
+  clean_names() |>
+  select(
+    -c(
+      num_players,
+      mins_per_90,
+      url,
+      succ_take,
+      tkld_take,
+      prg_r_receiving
+    )
+  ) |>
+  rename(
+    possession = poss,
+    touches = touches_touches,
+    touches_def_pen = def_pen_touches,
+    touches_def_third = def_3rd_touches,
+    touches_mid_third = mid_3rd_touches,
+    touches_att_third = att_3rd_touches,
+    touches_att_pen = att_pen_touches,
+    touches_live = live_touches,
+    takeon_attempts = att_take,
+    takeon_success_pct = succ_percent_take,
+    takeon_attempts_tackled = tkld_percent_take,
+    carries = carries_carries,
+    carries_dist_total = tot_dist_carries,
+    carries_dist_prog = prg_dist_carries,
+    carries_prog_count = prg_c_carries,
+    carries_enter_final_third = final_third_carries,
+    carries_enter_pen = cpa_carries,
+    carries_miscontrolled = mis_carries,
+    carries_dispossed = dis_carries,
+    passes_received = rec_receiving
+  ) |>
+  rename_with(
+    ~ str_c("possession_", .x),
+    .cols = -c(comp, season_end_year, squad, team_or_opponent)
+  ) |>
+  pivot_wider(
+    id_cols = c(season_end_year, squad, comp),
+    names_from = team_or_opponent,
+    values_from = 5:24
+  )
+
+glimpse(df_possession)
+
+####goalkeeping
+df_goalkeeping <- load_fb_big5_advanced_season_stats(
+  season_end_year = c(2019:2023),
+  stat_type = "keepers",
+  team_or_player = "team"
+) |>
+  as_tibble()
+
+df_goalkeeping <- df_goalkeeping |>
+  rename_with(clean_colname) |>
+  clean_names() |>
+  select(
+    -c(
+      num_players,
+      mp_playing,
+      starts_playing,
+      min_playing,
+      mins_per_90,
+      ga,
+      ga90,
+      w,
+      d,
+      l,
+      cs,
+      url
+    )
+  ) |>
+  rename(
+    clean_sheet_pct = cs_percent,
+    sh_pk = p_katt_penalty,
+    pk_against = pka_penalty,
+    pk_against_saved = p_ksv_penalty,
+    pk_against_missed = p_km_penalty,
+    pk_save_pct = save_percent_penalty
+  ) |>
+  mutate(
+    pk_save_pct = case_when(
+      pk_against == 0 & pk_against_saved == 0 ~ 0,
+      .default = pk_save_pct
+    )
+  ) |>
+  rename_with(
+    ~ str_c("goalkeeping_", .x),
+    .cols = -c(comp, season_end_year, squad, team_or_opponent)
+  ) |>
+  pivot_wider(
+    id_cols = c(season_end_year, squad, comp),
+    names_from = team_or_opponent,
+    values_from = 5:13
+  )
+
+glimpse(df_goalkeeping)
+
+df_goalkeeping |>
+  pivot_longer(
+    cols = -c(season_end_year, comp, squad),
+    values_transform = as.character
+  ) |>
+  summarize(pct_na = mean(is.na(value)), .by = c(season_end_year, comp)) |>
+  arrange(desc(pct_na))
+
+df_goalkeeping |>
+  pivot_longer(
+    cols = -c(season_end_year, comp, squad),
+    values_transform = as.character
+  ) |>
+  summarize(
+    pct_na = mean(is.na(value)),
+    .by = c(season_end_year, comp, name)
+  ) |>
+  arrange(desc(pct_na))
+
+####goalkeeping advanced
+df_goalkeeping_adv <- load_fb_big5_advanced_season_stats(
+  season_end_year = c(2019:2023),
+  stat_type = "keepers_adv",
+  team_or_player = "team"
+) |>
+  as_tibble()
+
+df_goalkeeping_adv <- df_goalkeeping_adv |>
+  rename_with(clean_colname) |>
+  clean_names() |>
+  select(
+    -c(
+      num_players,
+      mins_per_90,
+      ga_goals,
+      pka_goals,
+      number_opa_per_90_sweeper,
+      stp_crosses,
+      att_gk_passes,
+      url
+    )
+  ) |>
+  rename(
+    ga_fk = fk_goals,
+    ga_ck = ck_goals,
+    ga_og = og_goals,
+    ps_xg_against = p_sx_g_expected,
+    ps_xg_per_sot = p_sx_g_per_so_t_expected,
+    ps_xg_against_minus_goals_against = p_sx_g_per_minus_expected,
+    gk_pass_launch_att = cmp_launched,
+    gk_pass_launch_success_pct = cmp_percent_launched,
+    gk_pass_att = att_passes,
+    gk_pass_throw_att = thr_passes,
+    gk_pass_launch_pct = launch_percent_passes,
+    gk_pass_avg_length = avg_len_passes,
+    gk_goal_kick_att = att_goal,
+    gk_goal_kick_launch_pct = launch_percent_goal,
+    gk_goal_kick_avg_length = avg_len_goal,
+    gk_cross_against = opp_crosses,
+    gk_cross_stop_pct = stp_percent_crosses,
+    gk_defensive_actions_outside_penalty_area = number_opa_sweeper,
+    gk_avg_distance_sweeper = avg_dist_sweeper
+  ) |>
+  rename_with(
+    ~ str_c("goalkeeping_adv_", .x),
+    .cols = -c(comp, season_end_year, squad, team_or_opponent)
+  ) |>
+  pivot_wider(
+    id_cols = c(season_end_year, squad, comp),
+    names_from = team_or_opponent,
+    values_from = 5:25
+  )
+
+glimpse(df_goalkeeping_adv)
+
+####gca
+df_gca <- load_fb_big5_advanced_season_stats(
+  season_end_year = c(2019:2023),
+  stat_type = "gca",
+  team_or_player = "team"
+) |>
+  as_tibble()
+
+glimpse(df_gca)
+
+df_gca <- df_gca |>
+  rename_with(clean_colname) |>
+  clean_names() |>
+  select(
+    -c(
+      num_players,
+      mins_per_90,
+      sca_sca,
+      sca90_sca,
+      gca_gca,
+      gca90_gca,
+      url
+    )
+  ) |>
+  rename(
+    sca_from_pass_live = pass_live_sca,
+    sca_from_pass_dead = pass_dead_sca,
+    sca_from_takeon = to_sca,
+    sca_from_shot = sh_sca,
+    sca_from_foul = fld_sca,
+    sca_from_defense = def_sca,
+    gca_from_pass_live = pass_live_gca,
+    gca_from_pass_dead = pass_dead_gca,
+    gca_from_takeon = to_gca,
+    gca_from_shot = sh_gca,
+    gca_from_foul = fld_gca,
+    gca_from_defense = def_gca
+  ) |>
+  rename_with(
+    ~ str_c("gca_", .x),
+    .cols = -c(comp, season_end_year, squad, team_or_opponent)
+  ) |>
+  pivot_wider(
+    id_cols = c(season_end_year, squad, comp),
+    names_from = team_or_opponent,
+    values_from = 5:16
+  )
+
+glimpse(df_gca)
+
+####misc
+df_misc <- load_fb_big5_advanced_season_stats(
+  season_end_year = c(2019:2023),
+  stat_type = "misc",
+  team_or_player = "team"
+) |>
+  as_tibble()
+
+df_misc <- df_misc |>
+  rename_with(clean_colname) |>
+  clean_names() |>
+  select(
+    -c(
+      num_players,
+      mins_per_90,
+      url,
+      crd_y,
+      crd_r,
+      x2crd_y,
+      crs,
+      int,
+      tkl_w,
+      p_kwon,
+      p_kcon
+    )
+  ) |>
+  rename(
+    fouls_committed = fls,
+    fouls_drawn = fld,
+    offsides = off,
+    loose_ball_recoveries = recov,
+    own_goals = og,
+    aerials_won = won_aerial,
+    aerials_lost = lost_aerial
+  ) |>
+  rename_with(
+    ~ str_c("misc_", .x),
+    .cols = -c(comp, season_end_year, squad, team_or_opponent)
+  ) |>
+  pivot_wider(
+    id_cols = c(season_end_year, squad, comp),
+    names_from = team_or_opponent,
+    values_from = 5:11
+  )
+
+glimpse(df_misc)
+
+####combine
+fbref_data <- list(
+  df_standard,
+  df_shooting,
+  df_passing,
+  df_pass_types,
+  df_defense,
+  df_possession,
+  df_goalkeeping,
+  df_goalkeeping_adv,
+  df_gca,
+  df_misc
+) |>
+  reduce(left_join, by = c("squad", "comp", "season_end_year"))
+
+glimpse(fbref_data)
+
+per90_vars <- fbref_data |>
+  select(
+    -c(
+      squad,
+      comp,
+      season_end_year,
+      min_playing,
+      std_age_avg_team,
+      std_num_players_team,
+      contains("pct")
+    )
+  ) |>
+  names()
+
+fbref_data <- fbref_data |>
+  mutate(across(all_of(per90_vars), ~ (.x / min_playing) * 90))
+
+glimpse(fbref_data)
+
+# fbref_data |>
+#   select(comp, squad, season_end_year, min_playing) |>
+#   arrange(comp, season_end_year) |>
+#   distinct(comp, season_end_year, min_playing) |>
+#   view()
+
+# fbref_data |>
+#   select(comp, squad, season_end_year, min_playing) |>
+#   arrange(comp, squad, season_end_year) |>
+#   filter(comp == 'Ligue 1', season_end_year == 2020) |>
+#   distinct(comp, squad, season_end_year, min_playing) |>
+#   view()
+
+# fbref_data |>
+#   select(comp, squad, season_end_year, min_playing) |>
+#   arrange(comp, squad, season_end_year) |>
+#   mutate(id = str_c(comp, squad, season_end_year)) |>
+#   #filter(squad == "Tottenham") |>
+#   ggplot(aes(season_end_year, min_playing, color = comp, group = 1)) +
+#   geom_line() +
+#   facet_wrap(vars(comp))
+
+fbref_data |>
+  pivot_longer(
+    cols = -c(season_end_year, comp, squad),
+    values_transform = as.character
+  ) |>
+  summarize(pct_na = mean(is.na(value)), .by = c(season_end_year, comp)) |>
+  filter(pct_na > 0) |>
+  nrow() ==
+  0
+
+write_csv(fbref_data, "input/cleaned/fbref_data_cleaned.csv")
