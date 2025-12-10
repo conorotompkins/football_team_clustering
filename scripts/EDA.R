@@ -65,11 +65,26 @@ theme_set(theme_bw())
 # ) |>
 #   reduce(left_join, by = "squad")
 
-fbref_data <- read_csv("input/cleaned/fbref_data_cleaned.csv")
+fbref_data_raw <- read_csv("input/cleaned/fbref_data_cleaned.csv")
 
-glimpse(fbref_data)
+glimpse(fbref_data_raw)
 
-fbref_data <- fbref_data |>
+col_prefixes <- c(
+  "std",
+  "shooting",
+  "passing",
+  "pass_types",
+  "defense",
+  "goalkeeping_adv",
+  "goalkeeping",
+  "gca",
+  "misc",
+  "possession"
+)
+
+col_prefixes <- str_c("^", col_prefixes, "_") |> str_c(collapse = "|")
+
+fbref_data <- fbref_data_raw |>
   select(
     -c(
       starts_with("std_goals"),
@@ -89,7 +104,7 @@ fbref_data <- fbref_data |>
     squad,
     starts_with("std"),
     starts_with("shooting"),
-    starts_with("pass"),
+    starts_with("passing"),
     starts_with("pass_types"),
     starts_with("defense"),
     starts_with("goalkeeping"),
@@ -97,9 +112,24 @@ fbref_data <- fbref_data |>
     starts_with("gca"),
     starts_with("misc"),
     starts_with("possession")
-  )
+  ) |>
+  rename_with(~ str_remove(.x, col_prefixes))
 
 glimpse(fbref_data)
+
+
+# fbref_data |>
+#   select(contains("att_total_team"))
+
+# names(fbref_data) |>
+#   enframe() |>
+#   filter(str_detect(value, "att_total_team|types_passes_attempted_team"))
+
+# fbref_data |>
+#   select(squad, comp, season_end_year, contains("_sh_pk_team")) |>
+#   view()
+
+#glimpse(fbref_data)
 
 #cluster
 fbref_data_no_squad <- select(fbref_data, -c(comp, season_end_year, squad))
@@ -168,8 +198,9 @@ pca_rot |>
   geom_col() +
   scale_x_continuous(expand = expansion(mult = c(0, .3))) +
   scale_y_reordered() +
+  labs(x = "Contribution", y = NULL) +
   facet_wrap(vars(pc), scales = "free") +
-  theme(axis.text.y = element_text(size = 7))
+  theme(axis.text.y = element_text(size = 9))
 
 # define arrow style for plotting
 arrow_style <- arrow(

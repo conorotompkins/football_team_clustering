@@ -35,7 +35,7 @@ df_standard <- df_standard |>
     goals_plus_assists = g_a,
     goals_np = g_minus_pk,
     pk_made = pk,
-    sh_pk = p_katt,
+    sh_pk_attempted = p_katt,
     cards_yellow = crd_y,
     cards_red = crd_r,
     xg = x_g_expected,
@@ -187,19 +187,29 @@ df_passing <- df_passing |>
       ast
     )
   ) |>
-  rename_with(
-    ~ str_c("pass_", .x),
-    .cols = -c(comp, season_end_year, squad, team_or_opponent)
-  ) |>
   rename(
-    pass_xassisted_gls = pass_x_ag,
-    pass_xassists = pass_x_a,
-    pass_a_minus_xassisted_gls = pass_a_minus_x_ag,
-    pass_key = pass_kp,
-    pass_enter_final_third = pass_final_third,
-    pass_enter_penalty_area = pass_ppa,
-    pass_enter_penalty_area_cross = pass_crs_pa,
-    pass_progressive = pass_prg_p
+    passes_attempted_total = att_total,
+    xassisted_gls = x_ag,
+    xassists = x_a,
+    a_minus_xassisted_gls = a_minus_x_ag,
+    key_passes = kp,
+    pass_enter_final_third = final_third,
+    pass_enter_penalty_area = ppa,
+    pass_enter_penalty_area_cross = crs_pa,
+    pass_progressive_completed = prg_p,
+    pass_cmp_pct_total = cmp_percent_total,
+    pass_cmp_pct_short = cmp_percent_short,
+    pass_cmp_pct_medium = cmp_percent_medium,
+    pass_cmp_pct_long = cmp_percent_long,
+    pass_total_distance = tot_dist_total,
+    pass_progressive_total_distance = prg_dist_total,
+    pass_attempts_short = att_short,
+    pass_attemps_medium = att_medium,
+    pass_attempts_long = att_long
+  ) |>
+  rename_with(
+    ~ str_c("passing_", .x),
+    .cols = -c(comp, season_end_year, squad, team_or_opponent)
   ) |>
   pivot_wider(
     id_cols = c(season_end_year, squad, comp),
@@ -224,23 +234,23 @@ df_pass_types <- df_pass_types |>
     -c(
       num_players,
       starts_with("mins"),
+      att,
       url
     )
   ) |>
   rename(
-    attempted = att,
-    type_free_kick = fk_pass,
-    type_throughball = tb_pass,
-    type_switch = sw_pass,
-    type_cross = crs_pass,
-    type_throw_in = ti_pass,
-    type_corner = ck_pass,
-    type_corner_in = in_corner,
-    type_corner_out = out_corner,
-    type_corner_straight = str_corner,
-    completed = cmp_outcomes,
-    offsides = off_outcomes,
-    blocked_by_opp = blocks_outcomes
+    passes_free_kick = fk_pass,
+    passes_throughball = tb_pass,
+    passes_switch = sw_pass,
+    passes_cross = crs_pass,
+    passes_throw_in = ti_pass,
+    passes_corner = ck_pass,
+    passes_corner_in = in_corner,
+    passes_corner_out = out_corner,
+    passes_corner_straight = str_corner,
+    passes_completed = cmp_outcomes,
+    passes_offsides = off_outcomes,
+    passes_blocked_by_opp = blocks_outcomes
   ) |>
   rename_with(
     ~ str_c("pass_types_", .x),
@@ -249,7 +259,7 @@ df_pass_types <- df_pass_types |>
   pivot_wider(
     id_cols = c(season_end_year, squad, comp),
     names_from = team_or_opponent,
-    values_from = 5:19
+    values_from = 5:18
   )
 
 glimpse(df_pass_types)
@@ -321,7 +331,8 @@ df_possession <- df_possession |>
       mins_per_90,
       url,
       succ_take,
-      tkld_take
+      tkld_take,
+      prg_r_receiving
     )
   ) |>
   rename(
@@ -344,8 +355,7 @@ df_possession <- df_possession |>
     carries_enter_pen = cpa_carries,
     carries_miscontrolled = mis_carries,
     carries_dispossed = dis_carries,
-    passes_received = rec_receiving,
-    passes_prog_received = prg_r_receiving
+    passes_received = rec_receiving
   ) |>
   rename_with(
     ~ str_c("possession_", .x),
@@ -354,7 +364,7 @@ df_possession <- df_possession |>
   pivot_wider(
     id_cols = c(season_end_year, squad, comp),
     names_from = team_or_opponent,
-    values_from = 5:25
+    values_from = 5:24
   )
 
 glimpse(df_possession)
@@ -560,14 +570,17 @@ df_misc <- df_misc |>
       int,
       tkl_w,
       p_kwon,
-      p_kcon,
-      won_percent_aerial
+      p_kcon
     )
   ) |>
   rename(
     fouls_committed = fls,
     fouls_drawn = fld,
-    offsides = off
+    offsides = off,
+    loose_ball_recoveries = recov,
+    own_goals = og,
+    aerials_won = won_aerial,
+    aerials_lost = lost_aerial
   ) |>
   rename_with(
     ~ str_c("misc_", .x),
